@@ -1,0 +1,47 @@
+---
+title: Notes
+layout: base
+permalink: /notes/
+---
+
+<div class="space-y-6">
+
+  {% if collections.notes and collections.notes.length > 0 %}
+
+    {% for note in collections.notes %}
+      <article class="border-b border-gray-700 pb-6">
+
+        <h2 class="text-xl font-semibold">
+          <a
+            href="{{ note.url }}"
+            class="text-white hover:text-blue-400"
+          >
+            {{ note.data.title | default(note.fileSlug) }}
+          </a>
+        </h2>
+
+        {% if note.data.description %}
+          <p class="text-gray-400 mt-2">
+            {{ note.data.description }}
+          </p>
+        {% endif %}
+
+        <a
+          href="{{ note.url }}"
+          class="inline-block mt-3 text-blue-400 hover:text-white underline"
+        >
+          Read more →
+        </a>
+
+      </article>
+    {% endfor %}
+
+  {% else %}
+
+    <p class="text-gray-400">
+      No notes have been published yet.
+    </p>
+
+  {% endif %}
+
+</div>

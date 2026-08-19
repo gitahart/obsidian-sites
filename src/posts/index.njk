@@ -1,0 +1,47 @@
+---
+title: Posts
+layout: base
+permalink: /posts/
+---
+
+<div class="space-y-6">
+
+  {% if collections.posts and collections.posts.length > 0 %}
+
+    {% for post in collections.posts %}
+      <article class="border-b border-gray-700 pb-6">
+
+        <h2 class="text-xl font-semibold">
+          <a
+            href="{{ post.url }}"
+            class="text-white hover:text-blue-400"
+          >
+            {{ post.data.title | default(post.fileSlug) }}
+          </a>
+        </h2>
+
+        {% if post.data.description %}
+          <p class="text-gray-400 mt-2">
+            {{ post.data.description }}
+          </p>
+        {% endif %}
+
+        <a
+          href="{{ post.url }}"
+          class="inline-block mt-3 text-blue-400 hover:text-white underline"
+        >
+          Read more →
+        </a>
+
+      </article>
+    {% endfor %}
+
+  {% else %}
+
+    <p class="text-gray-400">
+      No posts have been published yet.
+    </p>
+
+  {% endif %}
+
+</div>

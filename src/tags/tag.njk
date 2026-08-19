@@ -1,0 +1,50 @@
+---
+layout: base
+pagination:
+  data: collections.tagList
+  size: 1
+  alias: tag
+permalink: "/tags/{{ tag | urlencode }}/"
+eleventyComputed:
+  title: "#{{ tag }}"
+---
+
+<div class="space-y-6">
+
+  {% set tagPages = collections.published | filterByTag(tag) %}
+
+  {% if tagPages and tagPages.length > 0 %}
+
+    {% for page in tagPages %}
+
+      <article class="border-b border-gray-700 pb-6">
+
+        <h2 class="text-xl font-semibold">
+          <a
+            href="{{ page.url }}"
+            class="text-white hover:text-blue-400"
+          >
+            {{ page.data.title | default(page.fileSlug) }}
+          </a>
+        </h2>
+
+        <a
+          href="{{ page.url }}"
+          class="inline-block mt-3 text-blue-400 hover:text-white underline"
+        >
+          Read more →
+        </a>
+
+      </article>
+
+    {% endfor %}
+
+  {% else %}
+
+    <p class="text-gray-400">
+      No published pages use this tag.
+    </p>
+
+  {% endif %}
+
+</div>

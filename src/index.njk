@@ -1,0 +1,49 @@
+---
+title: My Notes
+layout: base
+permalink: /
+---
+
+<div class="space-y-10">
+
+  <section>
+    <h2 class="text-xl font-semibold text-white mb-4">Posts</h2>
+
+    {% if collections.posts and collections.posts.length > 0 %}
+      <div class="space-y-4">
+        {% for post in collections.posts %}
+          <article class="border-b border-gray-700 pb-4">
+            <h3 class="text-lg font-semibold">
+              <a href="{{ post.url }}" class="text-white hover:text-blue-400">
+                {{ post.data.title | default(post.fileSlug) }}
+              </a>
+            </h3>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-gray-500">No posts published yet.</p>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2 class="text-xl font-semibold text-white mb-4">Notes</h2>
+
+    {% if collections.notes and collections.notes.length > 0 %}
+      <div class="space-y-4">
+        {% for note in collections.notes %}
+          <article class="border-b border-gray-700 pb-4">
+            <h3 class="text-lg font-semibold">
+              <a href="{{ note.url }}" class="text-white hover:text-blue-400">
+                {{ note.data.title | default(note.fileSlug) }}
+              </a>
+            </h3>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-gray-500">No notes published yet.</p>
+    {% endif %}
+  </section>
+
+</div>
