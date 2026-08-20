@@ -13,7 +13,7 @@ permalink: /notes/
 
         <h2 class="text-xl font-semibold">
           <a
-            href="{{ note.url }}"
+            href="/obsidian-sites{{ note.url }}"
             class="text-white hover:text-blue-400"
           >
             {{ note.data.title | default(note.fileSlug) }}
@@ -27,7 +27,7 @@ permalink: /notes/
         {% endif %}
 
         <a
-          href="{{ note.url }}"
+          href="/obsidian-sites{{ note.url }}"
           class="inline-block mt-3 text-blue-400 hover:text-white underline"
         >
           Read more →
