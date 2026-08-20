@@ -1,6 +1,11 @@
 const markdownIt = require("markdown-it");
 
 module.exports = function (eleventyConfig) {
+  // =========================================================
+  // SITE CONFIGURATION
+  // =========================================================
+
+  const sitePrefix = "/obsidian-sites";
 
   // =========================================================
   // MARKDOWN
@@ -72,10 +77,9 @@ module.exports = function (eleventyConfig) {
 
     return matches
       .map((match) => {
-        const found =
-          match.match(
-            /#([a-zA-Z0-9_-]+)/
-          );
+        const found = match.match(
+          /#([a-zA-Z0-9_-]+)/
+        );
 
         return found
           ? found[1].toLowerCase()
@@ -89,6 +93,29 @@ module.exports = function (eleventyConfig) {
       .trim()
       .toLowerCase()
       .replace(/\.md$/i, "");
+  }
+
+  function getAllTags(item) {
+    const tags = new Set();
+
+    getTags(item).forEach((tag) => {
+      if (tag !== "posts" && tag !== "notes") {
+        tags.add(tag);
+      }
+    });
+
+    const raw =
+      typeof item?.rawInput === "string"
+        ? item.rawInput
+        : "";
+
+    extractInlineTags(raw).forEach((tag) => {
+      if (tag !== "posts" && tag !== "notes") {
+        tags.add(tag);
+      }
+    });
+
+    return Array.from(tags);
   }
 
   // =========================================================
@@ -109,42 +136,10 @@ module.exports = function (eleventyConfig) {
     }
   );
 
-    eleventyConfig.addFilter(
+  eleventyConfig.addFilter(
     "isPublished",
     function (item) {
       return isPublished(item);
-    }
-  );
-
-  eleventyConfig.addFilter(
-    "filterByTag",
-    function (items, tag) {
-      if (!Array.isArray(items)) {
-        return [];
-      }
-
-      const wantedTag =
-        normalizeTag(tag);
-
-      return items.filter((item) => {
-        if (!item || !item.data) {
-          return false;
-        }
-
-        if (
-          getTags(item).includes(wantedTag)
-        ) {
-          return true;
-        }
-
-        const raw =
-          typeof item.rawInput === "string"
-            ? item.rawInput
-            : "";
-
-        return extractInlineTags(raw)
-          .includes(wantedTag);
-      });
     }
   );
 
@@ -156,32 +151,45 @@ module.exports = function (eleventyConfig) {
   );
 
   // =========================================================
+  // FILTER BY TAG
+  // =========================================================
+
+  eleventyConfig.addFilter(
+    "filterByTag",
+    function (collection, tag) {
+      if (!Array.isArray(collection)) {
+        return [];
+      }
+
+      const normalizedTag = normalizeTag(tag);
+
+      return collection.filter((item) => {
+        return getAllTags(item).includes(
+          normalizedTag
+        );
+      });
+    }
+  );
+
+  // =========================================================
   // INLINE TAGS
-  //
-  // #Jeremiah
-  // becomes:
-  // /tags/jeremiah/
   // =========================================================
 
   eleventyConfig.addFilter(
     "inlineTags",
     function (content) {
-      if (
-        !content ||
-        typeof content !== "string"
-      ) {
+      if (!content || typeof content !== "string") {
         return content || "";
       }
 
       return content.replace(
-        /(^|>|\s)#([a-zA-Z0-9_-]+)/g,
+        /(^|[\s>])#([a-zA-Z0-9_-]+)/g,
         (match, prefix, tag) => {
-          const tagName =
-            tag.toLowerCase();
+          const tagName = tag.toLowerCase();
 
           return (
             `${prefix}` +
-            `<a href="/tags/${encodeURIComponent(tagName)}/"` +
+            `<a href="${sitePrefix}/tags/${encodeURIComponent(tagName)}/"` +
             ` class="text-blue-400 hover:text-white underline">` +
             `#${tag}` +
             `</a>`
@@ -193,41 +201,28 @@ module.exports = function (eleventyConfig) {
 
   // =========================================================
   // WIKI LINKS
-  //
-  // [[Jeremiah]]
-  // becomes:
-  // /notes/jeremiah/
-  //
-  // [[Jeremiah|Read Jeremiah]]
-  // becomes a link with custom display text.
   // =========================================================
 
   eleventyConfig.addFilter(
     "wikilinks",
     function (content) {
-      if (
-        !content ||
-        typeof content !== "string"
-      ) {
+      if (!content || typeof content !== "string") {
         return content || "";
       }
 
       return content.replace(
         /\[\[([^\]|#]+)(?:\|([^\]]+))?\]\]/g,
         (match, target, display) => {
-          const name =
-            target.trim();
+          const name = target.trim();
 
-          const text =
-            display
-              ? display.trim()
-              : name;
+          const text = display
+            ? display.trim()
+            : name;
 
-          const slug =
-            slugify(name);
+          const slug = slugify(name);
 
           return (
-            `<a href="/notes/${slug}/"` +
+            `<a href="${sitePrefix}/notes/${slug}/"` +
             ` class="text-blue-400 hover:text-white underline">` +
             `${text}` +
             `</a>`
@@ -239,23 +234,12 @@ module.exports = function (eleventyConfig) {
 
   // =========================================================
   // AUTO LINKS
-  //
-  // Handles:
-  //
-  // [[Jeremiah]]
-  // #Jeremiah
-  // https://example.com
-  //
-  // This is used by base.njk.
   // =========================================================
 
   eleventyConfig.addFilter(
     "autoLinks",
     function (content) {
-      if (
-        !content ||
-        typeof content !== "string"
-      ) {
+      if (!content || typeof content !== "string") {
         return content || "";
       }
 
@@ -268,19 +252,16 @@ module.exports = function (eleventyConfig) {
       result = result.replace(
         /\[\[([^\]|#]+)(?:\|([^\]]+))?\]\]/g,
         (match, target, display) => {
-          const name =
-            target.trim();
+          const name = target.trim();
 
-          const text =
-            display
-              ? display.trim()
-              : name;
+          const text = display
+            ? display.trim()
+            : name;
 
-          const slug =
-            slugify(name);
+          const slug = slugify(name);
 
           return (
-            `<a href="/notes/${slug}/"` +
+            `<a href="${sitePrefix}/notes/${slug}/"` +
             ` class="text-blue-400 hover:text-white underline">` +
             `${text}` +
             `</a>`
@@ -293,14 +274,25 @@ module.exports = function (eleventyConfig) {
       // -------------------------------------------------------
 
       result = result.replace(
-        /(^|>|\s)#([a-zA-Z0-9_-]+)/g,
-        (match, prefix, tag) => {
-          const tagName =
-            tag.toLowerCase();
+        /(^|[\s>])#([a-zA-Z0-9_-]+)/g,
+        (match, prefix, tag, offset, wholeString) => {
+          const before = wholeString.slice(
+            Math.max(0, offset - 30),
+            offset
+          );
+
+          if (
+            before.includes("href=") ||
+            before.includes("<a ")
+          ) {
+            return match;
+          }
+
+          const tagName = tag.toLowerCase();
 
           return (
             `${prefix}` +
-            `<a href="/tags/${encodeURIComponent(tagName)}/"` +
+            `<a href="${sitePrefix}/tags/${encodeURIComponent(tagName)}/"` +
             ` class="text-blue-400 hover:text-white underline">` +
             `#${tag}` +
             `</a>`
@@ -443,27 +435,8 @@ module.exports = function (eleventyConfig) {
           return isPublished(item);
         })
         .forEach((item) => {
-          getTags(item).forEach((tag) => {
-            if (
-              tag !== "posts" &&
-              tag !== "notes"
-            ) {
-              tags.add(tag);
-            }
-          });
-
-          const raw =
-            typeof item.rawInput === "string"
-              ? item.rawInput
-              : "";
-
-          extractInlineTags(raw).forEach((tag) => {
-            if (
-              tag !== "posts" &&
-              tag !== "notes"
-            ) {
-              tags.add(tag);
-            }
+          getAllTags(item).forEach((tag) => {
+            tags.add(tag);
           });
         });
 
@@ -494,27 +467,8 @@ module.exports = function (eleventyConfig) {
           return isPublished(item);
         })
         .forEach((item) => {
-          getTags(item).forEach((tag) => {
-            if (
-              tag !== "posts" &&
-              tag !== "notes"
-            ) {
-              tags.add(tag);
-            }
-          });
-
-          const raw =
-            typeof item.rawInput === "string"
-              ? item.rawInput
-              : "";
-
-          extractInlineTags(raw).forEach((tag) => {
-            if (
-              tag !== "posts" &&
-              tag !== "notes"
-            ) {
-              tags.add(tag);
-            }
+          getAllTags(item).forEach((tag) => {
+            tags.add(tag);
           });
         });
 
@@ -579,9 +533,7 @@ module.exports = function (eleventyConfig) {
           }
 
           const linkedName =
-            normalizeNoteName(
-              match[1]
-            );
+            normalizeNoteName(match[1]);
 
           if (
             linkedName === currentName &&
@@ -598,67 +550,42 @@ module.exports = function (eleventyConfig) {
 
   // =========================================================
   // PERMALINKS
-  //
-  // src/content/Jeremiah.md
-  //
-  // becomes:
-  //
-  // /notes/jeremiah/
   // =========================================================
 
-  eleventyConfig.addGlobalData(
-    "eleventyComputed",
-    {
-      permalink: (data) => {
-
-        // Explicit permalink always wins.
-        if (
-          data.permalink &&
-          typeof data.permalink === "string"
-        ) {
-          return data.permalink;
-        }
-
-        // Only Markdown.
-        if (
-          !data.page ||
-          !data.page.inputPath ||
-          !data.page.inputPath.endsWith(".md")
-        ) {
-          return false;
-        }
-
-        // Only published content.
-        const tags =
-          Array.isArray(data.tags)
-            ? data.tags
-            : data.tags
-              ? [data.tags]
-              : [];
-
-        const normalizedTags =
-          tags.map(normalizeTag);
-
-        const published =
-          normalizedTags.includes("posts") ||
-          normalizedTags.includes("notes");
-
-        if (!published) {
-          return false;
-        }
-
-        const fileSlug =
-          data.page.fileSlug;
-
-        return `/notes/${slugify(
-          fileSlug
-        )}/`;
+  eleventyConfig.addGlobalData("eleventyComputed", {
+    permalink: (data) => {
+      if (data.permalink && typeof data.permalink === "string") {
+        return data.permalink;
       }
+
+      if (
+        !data.page ||
+        !data.page.inputPath ||
+        !data.page.inputPath.endsWith(".md")
+      ) {
+        return false;
+      }
+
+      const tags = Array.isArray(data.tags)
+        ? data.tags
+        : data.tags
+          ? [data.tags]
+          : [];
+
+      const published = tags
+        .map(normalizeTag)
+        .some((tag) => tag === "posts" || tag === "notes");
+
+      if (!published) {
+        return false;
+      }
+
+      return `/notes/${slugify(data.page.fileSlug)}/`;
     }
-  );
+  });
 
   // =========================================================
-  // IGNORE PRIVATE FILES
+  // IGNORE NON-SITE FILES
   // =========================================================
 
   eleventyConfig.ignores.add(
@@ -701,7 +628,6 @@ module.exports = function (eleventyConfig) {
     ".eleventy.js"
   );
 
-  // Obsidian's old index is not public content.
   eleventyConfig.ignores.add(
     "content/notes/index.md"
   );
@@ -711,6 +637,8 @@ module.exports = function (eleventyConfig) {
   // =========================================================
 
   return {
+    pathPrefix: "/obsidian-sites/",
+
     dir: {
       input: "src",
       includes: "_includes",
